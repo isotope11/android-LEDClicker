@@ -1,8 +1,10 @@
 package com.isotope11.ledclicker;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.bsf.BSFException;
-import org.jruby.Ruby;
-import org.jruby.runtime.builtin.IRubyObject;
+import org.jruby.embed.ScriptingContainer;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -14,11 +16,18 @@ import android.widget.Toast;
 public class MainActivity extends Activity {
 	
 	protected final String TAG = MainActivity.class.toString();
-
+	protected ScriptingContainer mRubyContainer;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		System.setProperty("jruby.bytecode.version", "1.5");
+		mRubyContainer = new ScriptingContainer();
+		List<String> loadPaths = new ArrayList<String>();
+        loadPaths.add("jruby.home/lib/ruby/shared");
+        loadPaths.add("jruby.home/lib/ruby/1.8");
+        mRubyContainer.setLoadPaths(loadPaths);
 	}
 
 	@Override
@@ -37,10 +46,9 @@ public class MainActivity extends Activity {
 	}
 
 	private void runSomeRubbies() throws BSFException {
-		System.setProperty("jruby.bytecode.version", "1.5");
-		Ruby runtime = Ruby.newInstance();
-		IRubyObject result = runtime.evalScriptlet("'foo'");
+		String rubyDrbClient = "require 'drb/drb';SERVER_URI='druby://192.168.1.83:8787';DRb.start_service;timeserver = DRbObject.new_with_uri(SERVER_URI);puts timeserver.get_current_time";
+		String result = (String) mRubyContainer.runScriptlet(rubyDrbClient);
 		
-		Toast.makeText(this, (String) result.convertToString().toJava(String.class), Toast.LENGTH_LONG).show();
+		Toast.makeText(this, result, Toast.LENGTH_LONG).show();
 	}
 }
